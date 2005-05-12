@@ -1,0 +1,73 @@
+NAME
+    ThreatNet::Bot::AmmoBot - Tail threat messages from a file to ThreatNet
+
+SYNOPIS
+      # Tail ThreatNet-compatible messages from a file to IRC
+      > ./ammobot --nick=ammobot            \
+      >           --server=irc.freenode.org \
+      >           --channel=#threatnet      \
+      >           --port=6669               \
+      >           --file=/var/log/threats.log
+
+DESCRIPTION
+    "ammobot" is the basic foot soldier of the ThreatNet bot ecosystem,
+    fetching ammunition and bringing it to the channel.
+
+    It connects to a single ThreatNet channel, and then tails a file
+    scanning for threat messages while following the basic channel rules.
+
+    When it sees a ThreatNet::Message::IPv4-compatible message appear at the
+    end of the file, it will report it to the channel (subject to the
+    appropriate channel rules).
+
+    Its main purpose is to make it as easy as possible to connect any system
+    capable of writing a log file to ThreatNet. If an application can be
+    configured or coded to spit out the appropriately formatted messages to
+    a file, then "ammobot" will patiently watch for them and then haul them
+    off to the channel for you (so you don't have to).
+
+METHODS
+  spawn %args
+    The isn't really any big reason that you would be wanting to instantiate
+    a "ThreatNet::Bot::AmmoBot" yourself, but if it comes to that you do it
+    by simply passing a list of the appropriate arguments to the "spawn"
+    method.
+
+    Because "ammobot" is POE based, "spawn" behaves like your typical POE
+    component.
+
+      # Create the ammobot
+      my $Bot = ThreatNet::Bot::AmmoBot->spawn( %args );
+  
+      # Run the ammobot
+      POE::Kernel->run;
+
+TO DO
+    - Add support for multiple files
+
+    - Add support for custom file format specifications
+
+    - Add support for additional outbound filters
+
+SUPPORT
+    All bugs should be filed via the bug tracker at
+
+    <http://rt.cpan.org/NoAuth/ReportBug.html?Queue=ThreatNet-Bot-AmmoBot>
+
+    For other issues, or commercial enhancement and support, contact the
+    author
+
+AUTHORS
+    Adam Kennedy (Maintainer), <http://ali.as/>, cpan@ali.as
+
+SEE ALSO
+    <http://ali.as/devel/threatnetwork.html>, POE
+
+COPYRIGHT
+    Copyright (c) 2005 Adam Kennedy. All rights reserved. This program is
+    free software; you can redistribute it and/or modify it under the same
+    terms as Perl itself.
+
+    The full text of the license can be found in the LICENSE file included
+    with this module.
+

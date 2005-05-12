@@ -1,0 +1,54 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use ThreatNet::Bot::AmmoBot;
+use POE;
+
+use vars qw{$VERSION};
+BEGIN {
+	$VERSION = '0.01';
+}
+
+
+
+
+
+#####################################################################
+# Get Options
+
+my $Nick    = '';
+my $Channel = '';
+my $Server  = '';
+my $Port    = 6669;
+my $File    = '';
+
+my $rv = GetOptions(
+	"nick=s"    => \$Nick,
+	"server=s"  => \$Server,
+	"post=i"    => \$Port,
+	"channel=s" => \$Channel,
+	"file=s"    => \$File,
+	);
+exit(0) unless $rv;
+
+
+
+
+
+#####################################################################
+# Execute
+
+my $AmmoBot = ThreatNet::Bot::AmmoBot->spawn(
+	Nick    => $Nick,
+	Channel => $Channel,
+	Server  => $Server,
+	Port    => $Port,
+	File    => $File,
+	) or die "Failed to spawn AmmoBot";
+
+# Start the POE Kernel
+POE::Kernel->run;
+
+1;
