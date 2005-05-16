@@ -1,5 +1,5 @@
 name: ThreatNet-Bot-AmmoBot
-version: 0.01
+version: 0.02
 abstract: Tail threat messages from a file to ThreatNet
 author: Adam Kennedy <cpan@ali.as>
 license: perl

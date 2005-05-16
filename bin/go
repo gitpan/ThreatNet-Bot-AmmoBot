@@ -1,0 +1,4 @@
+#!/bin/sh
+
+./ammobot --nick=ammobot001 --server=irc.freenode.org --channel=#threatnet --port=6667 --file=threats.log 1>>stdout.log 2>>stderr.log
+

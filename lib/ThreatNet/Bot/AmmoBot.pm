@@ -40,7 +40,10 @@ off to the channel for you (so you don't have to).
 use strict;
 use warnings;
 use Params::Util '_INSTANCE';
-use POE qw(Wheel::FollowTail);
+use POE qw(
+	Wheel::FollowTail
+	Component::IRC
+	);
 use ThreatNet::Message::IPv4       ();
 use ThreatNet::Filter::Chain       ();
 use ThreatNet::Filter::Network     ();
@@ -48,7 +51,7 @@ use ThreatNet::Filter::ThreatCache ();
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '0.01';
+	$VERSION = '0.02';
 }
 
 
@@ -87,7 +90,7 @@ sub spawn {
 	$args{Channel} =~ /^\#\w+$/
 			or die "Invalid channel specification";
 	$args{Server}   or die "Did not specify a server";
-	$args{Port}     ||= 6669;
+	$args{Port}     ||= 6667;
 	$args{Username} ||= $args{Nick};
 	$args{Ircname}  ||= $args{Nick};
 	$args{File}     or die "Did not specify a file to tail";
@@ -114,7 +117,7 @@ sub spawn {
 			irc_disconnected => \&_irc_disconnected,
 			irc_public       => \&_irc_public,
 
-			threat_recieve   => \&_threat_recieve,
+			threat_receive   => \&_threat_receive,
 			threat_send      => \&_threat_send,
 		},
 		args => [ \%args ],
@@ -224,8 +227,8 @@ sub _irc_public {
 	# Pass the message through the channel i/o filter
 	$_[HEAP]->{Filter}->keep($Message) or return;
 
-	# Hand off to the threat_recieve message
-	$_[KERNEL]->yield( threat_recieve => $Message );
+	# Hand off to the threat_receive message
+	$_[KERNEL]->yield( threat_receive => $Message );
 }
 
 
@@ -236,7 +239,7 @@ sub _irc_public {
 # ThreatNet Events
 
 # We just do nothing normally
-sub _threat_recieve {
+sub _threat_receive {
 	1;
 }
 
@@ -247,7 +250,7 @@ sub _threat_send {
 	$_[HEAP]->{Filter}->keep($Message) or return;
 
 	# Send the message immediately
-	$_[HEAP]->{IRC}->yield( privmsg => $_[HEAP]->{args}->{Channel}, $Message->message );
+	$_[HEAP]->{IRC}->yield( privmsg => $_[HEAP]->{Channel}, $Message->message );
 }
 
 1;

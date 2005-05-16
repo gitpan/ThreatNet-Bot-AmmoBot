@@ -1,4 +1,7 @@
 Revision history for Perl extension ThreatNet::Bot::AmmoBot
 
+0.02 Mon Apr 16 2005
+	- Fixed a variety of small bugs
+
 0.01 Wed Apr 11 2005
 	- Created the initial version of the bot

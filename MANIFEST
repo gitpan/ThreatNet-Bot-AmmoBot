@@ -1,4 +1,8 @@
 bin/ammobot
+bin/go
+bin/stderr.log
+bin/stdout.log
+bin/threats.log
 Changes
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm

@@ -27,7 +27,7 @@ my $File    = '';
 my $rv = GetOptions(
 	"nick=s"    => \$Nick,
 	"server=s"  => \$Server,
-	"post=i"    => \$Port,
+	"port=i"    => \$Port,
 	"channel=s" => \$Channel,
 	"file=s"    => \$File,
 	);
