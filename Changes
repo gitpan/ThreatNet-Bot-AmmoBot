@@ -1,5 +1,9 @@
 Revision history for Perl extension ThreatNet::Bot::AmmoBot
 
+0.03 Wed Jun  8 2005
+	- Converted to use a config file
+	- Added multiple file support
+
 0.02 Mon Apr 16 2005
 	- Fixed a variety of small bugs
 

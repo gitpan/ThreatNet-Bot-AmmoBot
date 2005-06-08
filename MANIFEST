@@ -1,8 +1,4 @@
 bin/ammobot
-bin/go
-bin/stderr.log
-bin/stdout.log
-bin/threats.log
 Changes
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm
@@ -11,6 +7,7 @@ inc/Module/Install/Can.pm
 inc/Module/Install/Fetch.pm
 inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
+inc/Module/Install/Scripts.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 lib/ThreatNet/Bot/AmmoBot.pm
@@ -20,4 +17,5 @@ MANIFEST			This list of files
 META.yml
 README
 t/01_compile.t
+t/02_create.t
 t/99_pod.t

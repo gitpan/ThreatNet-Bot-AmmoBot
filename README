@@ -27,20 +27,17 @@ DESCRIPTION
     off to the channel for you (so you don't have to).
 
 METHODS
-  spawn %args
+  new %args
     The isn't really any big reason that you would be wanting to instantiate
     a "ThreatNet::Bot::AmmoBot" yourself, but if it comes to that you do it
-    by simply passing a list of the appropriate arguments to the "spawn"
+    by simply passing a list of the appropriate arguments to the "new"
     method.
 
-    Because "ammobot" is POE based, "spawn" behaves like your typical POE
-    component.
-
       # Create the ammobot
-      my $Bot = ThreatNet::Bot::AmmoBot->spawn( %args );
+      my $Bot = ThreatNet::Bot::AmmoBot->new( %args );
   
       # Run the ammobot
-      POE::Kernel->run;
+      $Bot->run;
 
 TO DO
     - Add support for multiple files

@@ -1,4 +1,0 @@
-The POE::Component::IRC event "privmsg" requires two arguments at /usr/local/share/perl/5.8.4/POE/Component/IRC.pm line 1252.
-The POE::Component::IRC event "privmsg" requires two arguments at /usr/local/share/perl/5.8.4/POE/Component/IRC.pm line 1252.
-Use of uninitialized value in concatenation (.) or string at ../../modules/ThreatNet/Bot/AmmoBot.pm line 253.
-privmsg => , 1.2.3.4

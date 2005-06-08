@@ -2,13 +2,17 @@
 
 use strict;
 use warnings;
-use Getopt::Long;
-use ThreatNet::Bot::AmmoBot;
-use POE;
+use Getopt::Long ();
+use Config::Tiny ();
+use File::Basename ();
+use Params::Util '_INSTANCE',
+                 '_CLASS';
+use Class::Inspector ();
+use ThreatNet::Bot::AmmoBot ();
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '0.01';
+	$VERSION = '0.03';
 }
 
 
@@ -16,22 +20,97 @@ BEGIN {
 
 
 #####################################################################
-# Get Options
+# Load the Config File
 
-my $Nick    = '';
-my $Channel = '';
-my $Server  = '';
-my $Port    = 6669;
-my $File    = '';
+my $config_file = $ARGV[0];
+unless ( -f $config_file ) {
+	error( "Failed to find config file '$config_file'" );
+}
+my $Config = Config::Tiny->read( $config_file )
+	or error( "Failed to load config file: "
+		. Config::Tiny->errstr );
+my $config_dir = File::Basename::dirname( $config_file );
+push @INC, $config_dir;
 
-my $rv = GetOptions(
-	"nick=s"    => \$Nick,
-	"server=s"  => \$Server,
-	"port=i"    => \$Port,
-	"channel=s" => \$Channel,
-	"file=s"    => \$File,
-	);
-exit(0) unless $rv;
+
+
+
+
+#####################################################################
+# Bot Configuration
+
+# Check the main part of the config
+my $main = delete $Config->{_} || {};
+unless ( $main->{Version} ) {
+	error( "Config file does not specify a Version" );
+}
+unless ( $main->{Version} == $ThreatNet::Bot::AmmoBot::VERSION ) {
+	error( "Config version '$main->{Version}' does not match \$ThreatNet::Bot::AmmoBot::VERSION '$ThreatNet::Bot::AmmoBot::VERSION'" );
+}
+unless ( $main->{Nick} ) {
+	error( "Config file does not specific a Nick" );
+}
+unless ( $main->{Server} ) {
+	error( "Config file does not specific a Server" );
+}
+unless ( $main->{Channel} ) {
+	error( "Config file does not specific a Channel" );
+}
+
+# Create the bot object
+my $AmmoBot = ThreatNet::Bot::AmmoBot->new(
+	Nick    => $main->{Nick},
+	Channel => $main->{Channel},
+	Server  => $main->{Server},
+	$main->{Port}
+		? (Port => $main->{Port})
+		: (),
+	)
+	or error("Failed to create ThreatNet::Bot::AmmoBot object");
+
+
+
+
+
+#####################################################################
+# File Configuration
+
+foreach my $file ( sort keys %$Config ) {
+	my $section = $Config->{$file};
+	my %params  = ();
+
+	# Check the file
+	$file =~ s/^\s+//;
+	$file =~ s/\s+$//;
+	unless ( -f $file and -r $file ) {
+		error( "File '$file' does not exist" );
+	}
+
+	# Check for a custom driver
+	if ( _CLASS($section->{Driver}) ) {
+		$params{Driver} = _new($section->{Driver})
+			or error("Failed to create driver $section->{Driver}");
+		unless ( _INSTANCE($params{Driver}, 'POE::Driver') ) {
+			error("$section->{Driver} is not a POE::Driver object");
+		}
+	} elsif ( $section->{Driver} ) {
+		error("Driver '$section->{Driver}' is not a class name");
+	}
+
+	# Check for a custom filter
+	if ( _CLASS($section->{Filter}) ) {
+		$params{Filter} = _new($section->{Filter})
+			or error("Failed to create driver $section->{Filter}");
+		unless ( _INSTANCE($params{Filter}, 'POE::Filter') ) {
+			error("$section->{Filter} is not a POE::Filter object");
+		}
+	} elsif ( $section->{Filter} ) {
+		error("Driver '$section->{Filter}' is not a class name");
+	}
+
+	# Add the file
+	$AmmoBot->add_file( $file, %params );
+}
 
 
 
@@ -40,15 +119,28 @@ exit(0) unless $rv;
 #####################################################################
 # Execute
 
-my $AmmoBot = ThreatNet::Bot::AmmoBot->spawn(
-	Nick    => $Nick,
-	Channel => $Channel,
-	Server  => $Server,
-	Port    => $Port,
-	File    => $File,
-	) or die "Failed to spawn AmmoBot";
+$AmmoBot->run;
 
-# Start the POE Kernel
-POE::Kernel->run;
+
+
+
+
+#####################################################################
+# Support Functions
+
+sub _new {
+	my $class = shift;
+	unless ( Class::Inspector->loaded($class) ) {
+		my $file = Class::Inspector->resolved_filename($class);
+		require $file;
+	}
+	$class->new;
+}
+
+sub error {
+	my $msg = shift;
+	print $msg . "\n";
+	exit(255);
+}
 
 1;

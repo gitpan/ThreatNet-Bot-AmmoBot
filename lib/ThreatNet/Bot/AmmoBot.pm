@@ -51,7 +51,7 @@ use ThreatNet::Filter::ThreatCache ();
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '0.02';
+	$VERSION = '0.03';
 }
 
 
@@ -59,29 +59,26 @@ BEGIN {
 
 
 #####################################################################
-# Constructor and Start/Stop
+# Constructor and Accessors
 
 =pod
 
-=head2 spawn %args
+=head2 new %args
 
 The isn't really any big reason that you would be wanting to instantiate
 a C<ThreatNet::Bot::AmmoBot> yourself, but if it comes to that you do
-it by simply passing a list of the appropriate arguments to the C<spawn>
+it by simply passing a list of the appropriate arguments to the C<new>
 method.
 
-Because C<ammobot> is POE based, C<spawn> behaves like your typical POE
-component.
-
   # Create the ammobot
-  my $Bot = ThreatNet::Bot::AmmoBot->spawn( %args );
+  my $Bot = ThreatNet::Bot::AmmoBot->new( %args );
   
   # Run the ammobot
-  POE::Kernel->run;
+  $Bot->run;
 
 =cut
 
-sub spawn {
+sub new {
 	my ($class, %args) = @_;
 
 	# Check the args
@@ -93,9 +90,7 @@ sub spawn {
 	$args{Port}     ||= 6667;
 	$args{Username} ||= $args{Nick};
 	$args{Ircname}  ||= $args{Nick};
-	$args{File}     or die "Did not specify a file to tail";
-	-f $args{File}  and
-	-r $args{File}  or die "No permissions to read '$args{File}'";
+	$args{Tails}    = {};
 
 	# Create the IRC client
 	unless ( _INSTANCE($args{IRC}, 'POE::Component::IRC') ) {
@@ -103,8 +98,78 @@ sub spawn {
 			or die "Failed to create new IRC server: $!";
 	}
 
-	# Create the main Bot session
-	POE::Session->create(
+	# Create the empty object
+	my $self = bless {
+		running => '',
+		args    => \%args,
+		}, $class;
+
+	$self;
+}
+
+sub args    { $_[0]->{args}          }
+sub tails   { $_[0]->{args}->{Tails} }
+sub running { $_[0]->{running}       }
+sub Session { $_[0]->{Session}       }
+
+sub files {
+	my $self = shift;
+	wantarray
+		? (sort keys %{$self->tails})
+		: scalar(keys %{$self->tails});
+}
+
+
+
+
+
+#####################################################################
+
+# Add a file to the bot
+sub add_file {
+	my $self = shift;
+	$self->running and die "Cannot add files once the bot is running";
+	my $file = ($_[0] and -f $_[0] and -r $_[0]) ? shift
+		: die "Invalid file '$_[0]'";
+	if ( $self->tails->{$file} ) {
+		die "File '$file' already attached to bot";
+	}
+
+	# Create the basic FollowTail params
+	my %args = @_;
+	my %Params = (
+		Filename     => $file,
+		PollInterval => 1,
+		InputEvent   => 'tail_input',
+		ErrorEvent   => 'tail_error',
+		);
+
+	# Add the optional params if needed
+	if ( _INSTANCE($args{Driver}, 'POE::Driver') ) {
+		$Params{Driver} = $args{Driver};
+	} elsif ( $args{Driver} ) {
+		die "Driver param was not a valid POE::Driver";
+	}
+	if ( _INSTANCE($args{Filter}, 'POE::Filter') ) {
+		$Params{Filter} = $args{Filter};
+	} elsif ( $args{Filter} ) {
+		die "Filter param was not a valid POE::Filter";
+	}
+
+	# Save the FollowTail params
+	$self->tails->{$file} = \%Params;
+
+	1;
+}
+
+sub run {
+	my $self = shift;
+	unless ( $self->files ) {
+		die "Refusing to start, no files added";
+	}
+
+	# Create the Session
+	$self->{Session} = POE::Session->create(
 		inline_states => {
 			_start           => \&_start,
 			stop             => \&_stop,
@@ -119,11 +184,22 @@ sub spawn {
 
 			threat_receive   => \&_threat_receive,
 			threat_send      => \&_threat_send,
-		},
-		args => [ \%args ],
-	);
+			},
+		args => [ $self->args ],
+		);
+
+	$self->{running} = 1;
+	POE::Kernel->run;
 }
 
+
+
+
+
+#####################################################################
+# POE Event Handlers
+
+# Add a file
 # Called when the Kernel fires up
 sub _start {
 	%{$_[HEAP]} = %{$_[ARG0]};
@@ -144,18 +220,17 @@ sub _start {
 		Ircname  => $_[HEAP]->{Ircname},
 		} );
 
-	# Create the file tail
-	$_[HEAP]->{Tail} = POE::Wheel::FollowTail->new(
-		Filename     => $_[HEAP]->{File},
-		PollInterval => 1,
-		InputEvent   => 'tail_input',
-		ErrorEvent   => 'tail_error',
-		);
+	# Initialize the tails
+	my $Tails = $_[HEAP]->{Tails};
+	foreach my $key ( sort keys %$Tails ) {
+		$Tails->{$key} = POE::Wheel::FollowTail->new( %{$Tails->{$key}} )
+			or die "Failed to create FollowTail for $key";
+	}
 }
 
 sub _stop {
-	# Stop tailing the file (by deleting it apparently)
-	delete $_[HEAP]->{Tail};
+	# Stop tailing the files
+	delete $_[HEAP]->{Tails};
 
 	# Disconnect from IRC
 	if ( $_[HEAP]->{IRC} ) {
