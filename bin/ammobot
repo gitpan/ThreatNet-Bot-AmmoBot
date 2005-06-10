@@ -103,14 +103,15 @@ use ThreatNet::Bot::AmmoBot ();
 use Params::Util '_INSTANCE',
                  '_CLASS';
 
-use vars qw{$VERSION};
+use vars qw{$VERSION $RUNONCE};
 BEGIN {
-	$VERSION = '0.04';
+	$VERSION = '0.05';
+
+	# Only one copy can run per system (for now)
+	$RUNONCE = Fcntl::LOCK_EX() | Fcntl::LOCK_NB();
 }
 
-unless ( flock DATA, Fcntl::LOCK_EX | Fcntl::LOCK_NB ) {
-	exit(0);
-}
+exit(0) unless flock DATA, $RUNONCE;
 
 
 

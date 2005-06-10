@@ -15,15 +15,38 @@ BEGIN {
 	}
 }
 
+# Does a script compile
+sub compile_ok {
+	my $dist = shift;
+	my $script = shift;
+
+	# Find the script
+	my $path = $ENV{HARNESS_ACTIVE}
+		? catfile( 'bin', $script )
+		: catfile( updir(), updir(), 'bin', $dist, $script );
+	ok( -f $path, "Found script $script where expected at $path" );
+	SKIP: {
+		skip( "Can't find ammobot to compile test it", 2 ) unless -f $path;
+		ok( -r $path, "Have read permissions for $script" );
+		my $include = '';
+		unless ( $ENV{HARNESS_ACTIVE} ) {
+			$include = '-I' . catdir( updir(), updir(), 'modules');
+		}
+		my $cmd = "perl $include -c $path 1>/dev/null 2>/dev/null";
+		my $rv = system( $cmd );
+		is( $rv, 0, "Script $script compiles cleanly" );
+	}
+}
+
 
 
 
 
 # Does everything load?
-use Test::More 'tests' => 2;
+use Test::More 'tests' => 5;
 
 ok( $] >= 5.005, 'Your perl is new enough' );
-
 use_ok( 'ThreatNet::Bot::AmmoBot' );
+compile_ok( 'ThreatNet-Bot-AmmoBot', 'ammobot' );
 
 1;
