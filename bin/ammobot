@@ -1,18 +1,115 @@
 #!/usr/bin/perl
 
+=pod
+
+=head1 NAME
+
+ammobot - Tail threat messages to ThreatNet from log files
+
+=head1 SYNOPIS
+
+  > ammobot path/to/ammobot.conf
+  
+  # In your ammobot.conf
+  Version=0.04
+  Nick=ammobot
+  Server=irc.freenode.org
+  Channel=#threatnet
+  
+  [ /full/path/to/file/to/tail.log ]
+  # If no options, just looks for valid threat messages
+  
+  [ /another/full/path/to/tail.log ]
+  # Use a filter to convert to valid threat messages.
+  # The dir the config file is in will be added to the
+  # @INC module search path.
+  Filter=MyModule
+
+=head1 DESCRIPTION
+
+C<ammobot> is the basic foot soldier of the ThreatNet bot eco-system,
+fetching ammunition and bringing it to the channel.
+
+It connects to a single ThreatNet channel, and then tails one or more
+files scanning for threat messages while following the basic channel
+rules.
+
+When it sees a L<ThreatNet::Message::IPv4>-compatible message appear
+at the end of the file, it will report it to the channel (subject to
+the appropriate channel rules).
+
+Its main purpose is to make it as easy as possible to connect any system
+capable of writing a log file to ThreatNet. If an application can be
+configured or coded to spit out the appropriately formatted messages to
+a file, then C<ammobot> will patiently watch for them and then haul them
+off to the channel for you (so you don't have to).
+
+It the data can be extracted from an existing file format, then a
+C<Filter> property can be set which will specify a class to be used
+as a customer L<POE::Filter> for the event stream.
+
+=head2 Writing Filter Modules
+
+Here is an example of a custom filter module I use to get threats from my
+mail log.
+
+It lives at MyMailFilter.pm, in the same directory as my C<ammobot.conf> file.
+
+  package MyMailFilter;
+  
+  use base 'POE::Filter::Line';
+  
+  use POE::Filter::Line ();
+  
+  sub get {
+      my $self  = shift;
+      my $array = $self->SUPER::get( @_ );
+      
+      # Filter
+      my @out = ();
+      foreach ( @$array ) {
+          s/^.+\bpostfix\/smtpd\[\d+\]\:\s+// or next;
+          s/^NOQUEUE\:\s+reject\:\s+//        or next;
+          if ( s/^RCPT\s[^:]+?\[([\d\.]+)\]\:\s+// ) {
+              push @out, "$1 - $_";
+          } else {
+              next;
+          }
+      }
+      
+      return \@out;
+  }
+  
+  # Because for some reason POE::Filter::Grep->isa('POE::Filter')
+  # returns false, fake it.
+  # This should be fixed in a future version of POE.
+  sub isa {
+          my $either = shift;
+          return 1 if $_[0] eq 'POE::Filter';
+          $either->SUPER::isa(@_);
+  }
+  
+  1;
+
+=cut
+
 use strict;
-use warnings;
-use Getopt::Long ();
-use Config::Tiny ();
-use File::Basename ();
+use Fcntl                   ();
+use Getopt::Long            ();
+use Config::Tiny            ();
+use File::Basename          ();
+use Class::Inspector        ();
+use ThreatNet::Bot::AmmoBot ();
 use Params::Util '_INSTANCE',
                  '_CLASS';
-use Class::Inspector ();
-use ThreatNet::Bot::AmmoBot ();
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '0.03';
+	$VERSION = '0.04';
+}
+
+unless ( flock DATA, Fcntl::LOCK_EX | Fcntl::LOCK_NB ) {
+	exit(0);
 }
 
 
@@ -29,8 +126,7 @@ unless ( -f $config_file ) {
 my $Config = Config::Tiny->read( $config_file )
 	or error( "Failed to load config file: "
 		. Config::Tiny->errstr );
-my $config_dir = File::Basename::dirname( $config_file );
-push @INC, $config_dir;
+push @INC, File::Basename::dirname( $config_file );
 
 
 
@@ -144,3 +240,42 @@ sub error {
 }
 
 1;
+
+=pod
+
+=head1 TO DO
+
+- Add support for additional outbound filters
+
+=head1 SUPPORT
+
+All bugs should be filed via the bug tracker at
+
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=ThreatNet-Bot-AmmoBot>
+
+For other issues, or commercial enhancement and support, contact the author
+
+=head1 AUTHORS
+
+Adam Kennedy, L<http://ali.as/>, cpan@ali.as
+
+=head1 SEE ALSO
+
+L<http://ali.as/devel/threatnetwork.html>, L<POE>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2005 Adam Kennedy. All rights reserved.
+This program is free software; you can redistribute
+it and/or modify it under the same terms as Perl itself.
+
+The full text of the license can be found in the
+LICENSE file included with this module.
+
+=cut
+
+__DATA__
+
+Do not delete.
+
+This delete segment is used as part of the process lock.

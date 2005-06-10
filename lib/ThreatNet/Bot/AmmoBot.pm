@@ -6,22 +6,14 @@ package ThreatNet::Bot::AmmoBot;
 
 ThreatNet::Bot::AmmoBot - Tail threat messages from a file to ThreatNet
 
-=head1 SYNOPIS
-
-  # Tail ThreatNet-compatible messages from a file to IRC
-  > ./ammobot --nick=ammobot            \
-  >           --server=irc.freenode.org \
-  >           --channel=#threatnet      \
-  >           --port=6669               \
-  >           --file=/var/log/threats.log
-
 =head1 DESCRIPTION
 
-C<ammobot> is the basic foot soldier of the ThreatNet bot ecosystem,
-fetching ammunition and bringing it to the channel.
+C<ThreatNet::Bot::AmmoBot> is the basic foot soldier of the ThreatNet
+bot ecosystem, fetching ammunition and bringing it to the channel.
 
-It connects to a single ThreatNet channel, and then tails a file scanning
-for threat messages while following the basic channel rules.
+It connects to a single ThreatNet channel, and then tails one or more
+files scanning for threat messages while following the basic channel
+rules.
 
 When it sees a L<ThreatNet::Message::IPv4>-compatible message appear
 at the end of the file, it will report it to the channel (subject to
@@ -33,17 +25,18 @@ configured or coded to spit out the appropriately formatted messages to
 a file, then C<ammobot> will patiently watch for them and then haul them
 off to the channel for you (so you don't have to).
 
+It the data can be extracted from an existing file format, then a
+C<Filter> property can be set which will specify a class to be used
+as a customer L<POE::Filter> for the event stream.
+
 =head1 METHODS
 
 =cut
 
 use strict;
-use warnings;
 use Params::Util '_INSTANCE';
-use POE qw(
-	Wheel::FollowTail
-	Component::IRC
-	);
+use POE 'Wheel::FollowTail',
+        'Component::IRC';
 use ThreatNet::Message::IPv4       ();
 use ThreatNet::Filter::Chain       ();
 use ThreatNet::Filter::Network     ();
@@ -51,7 +44,7 @@ use ThreatNet::Filter::ThreatCache ();
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '0.03';
+	$VERSION = '0.04';
 }
 
 
@@ -107,10 +100,57 @@ sub new {
 	$self;
 }
 
-sub args    { $_[0]->{args}          }
-sub tails   { $_[0]->{args}->{Tails} }
-sub running { $_[0]->{running}       }
+=pod
+
+=head2 args
+
+The C<args> accessor returns the argument hash.
+
+=cut
+
+sub args { $_[0]->{args} }
+
+=pod
+
+=head2 tails
+
+The C<tails> accessor returns the C<HASH> of C<FollowTail> objects
+indexed by file name.
+
+=cut
+
+sub tails { $_[0]->{args}->{Tails} }
+
+=pod
+
+=head2 running
+
+The C<running> accessor returns true if the bot is currently
+running, or false if the bot has not yet started.
+
+=cut
+
+sub running { $_[0]->{running} }
+
+=pod
+
+=head2 Session
+
+Once the bot has started, the C<Session> accessor provides direct access
+to the L<POE::Session> object for the bot.
+
+=cut
+
 sub Session { $_[0]->{Session}       }
+
+=pod
+
+=head2 files
+
+The C<files> accessor returns a list of the files the bot is tailing
+(or will be tailing), or in scalar context returns the number of files.
+
+=cut
 
 sub files {
 	my $self = shift;
@@ -119,13 +159,23 @@ sub files {
 		: scalar(keys %{$self->tails});
 }
 
+=pod
 
+=head2 add_file $file [, Filter => $POEFilter ]
 
+Once you have created the Bot object, the C<add_file> method is used to
+add the list of files that the bot will be tailing.
 
+It takes as argument a file name, followed by a number of key/value
+parameters.
 
-#####################################################################
+For the time being, the only available param is C<"Filter">. The filter
+param provides a class name. The class will be loaded if needed, and
+then a new default object of it created and used as a custom
+L<POE::Filter> for the file.
 
-# Add a file to the bot
+=cut
+
 sub add_file {
 	my $self = shift;
 	$self->running and die "Cannot add files once the bot is running";
@@ -161,6 +211,18 @@ sub add_file {
 
 	1;
 }
+
+=pod
+
+=head2 run
+
+Once the bot has been created, and all of the files have been added, the
+C<run> method is used to start the bot, and connect to the files and the
+IRC server.
+
+The method dies if the bot has not had any files added.
+
+=cut
 
 sub run {
 	my $self = shift;
@@ -333,10 +395,6 @@ sub _threat_send {
 =pod
 
 =head1 TO DO
-
-- Add support for multiple files
-
-- Add support for custom file format specifications
 
 - Add support for additional outbound filters
 

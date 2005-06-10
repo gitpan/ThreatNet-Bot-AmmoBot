@@ -6,6 +6,7 @@ author         ( 'Adam Kennedy <cpan@ali.as>'          );
 version_from   ( 'lib/ThreatNet/Bot/AmmoBot.pm'        );
 license        ( 'perl'                                );
 requires       ( 'perl'                     => '5.005' );
+requires       ( 'Fcntl'                    => 0       );
 requires       ( 'Params::Util'             => '0.05'  );
 requires       ( 'Config::Tiny'             => '2.00'  );
 requires       ( 'Class::Inspector'         => '1.06'  );

@@ -1,5 +1,9 @@
 Revision history for Perl extension ThreatNet::Bot::AmmoBot
 
+0.04 Fri Hun 10 2005
+	- Adding a process lock to ammobot to make it more
+	  friendly with cron auto-restart scripts.
+
 0.03 Wed Jun  8 2005
 	- Converted to use a config file
 	- Added multiple file support
