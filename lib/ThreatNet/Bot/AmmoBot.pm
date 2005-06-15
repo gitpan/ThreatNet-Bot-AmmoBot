@@ -44,7 +44,7 @@ use ThreatNet::Filter::ThreatCache ();
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '0.05';
+	$VERSION = '0.06';
 }
 
 
@@ -267,9 +267,11 @@ sub _start {
 	%{$_[HEAP]} = %{$_[ARG0]};
 
 	# Create the main message i/o filter
+	$_[HEAP]->{ThreatCache} = ThreatNet::Filter::ThreatCache->new
+		or die "Failed to create ThreatCache Filter";
 	$_[HEAP]->{Filter} = ThreatNet::Filter::Chain->new(
 		ThreatNet::Filter::Network->new( discard => 'rfc3330' ),
-		ThreatNet::Filter::ThreatCache->new,
+		$_[HEAP]->{ThreatCache},
 		) or die "Failed to create Message I/O Filter";
 
 	# Register for events and connect to the server
@@ -359,13 +361,25 @@ sub _irc_public {
 	my ($who, $where, $msg) = @_[ARG0, ARG1, ARG2];
 
 	# Is this a ThreatNet message?
-	my $Message = ThreatNet::Message::IPv4->new($msg) or return;
+	my $Message = ThreatNet::Message::IPv4->new($msg);
+	if ( $Message ) {
+		# Pass the message through the channel i/o filter
+		$_[HEAP]->{Filter}->keep($Message) or return;
 
-	# Pass the message through the channel i/o filter
-	$_[HEAP]->{Filter}->keep($Message) or return;
+		# Hand off to the threat_receive message
+		return $_[KERNEL]->yield( threat_receive => $Message );
+	}
 
-	# Hand off to the threat_receive message
-	$_[KERNEL]->yield( threat_receive => $Message );
+	# Is this an addressed message?
+	my $Nick = $_[HEAP]->{Nick};
+	return unless $msg =~ /^$Nick(?::|,)?\s+(\w+)\b/;
+	my $command = lc $1;
+	return unless lc($1) eq 'status';
+
+	# Generate stats
+	my $stats = $_[HEAP]->{ThreatCache}->stats;
+	my $message = "Online $stats->{time_running} seconds. $stats->{seen} events at $stats->{rate_seen}/s with $stats->{kept} kept. $stats->{percent_discard} sync with channel";
+	$_[HEAP]->{IRC}->yield( privmsg => $_[HEAP]->{Channel}, $message );
 }
 
 

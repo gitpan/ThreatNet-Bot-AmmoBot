@@ -1,5 +1,5 @@
 name: ThreatNet-Bot-AmmoBot
-version: 0.05
+version: 0.06
 abstract: Tail threat messages from a file to ThreatNet
 author: Adam Kennedy <cpan@ali.as>
 license: perl
@@ -19,7 +19,7 @@ requires:
   POE::Wheel::FollowTail: 0
   POE::Component::IRC: 0
   ThreatNet::Message::IPv4: 0.01
-  ThreatNet::Filter: 0.02
+  ThreatNet::Filter: 0.03
 no_index:
   directory:
     - inc

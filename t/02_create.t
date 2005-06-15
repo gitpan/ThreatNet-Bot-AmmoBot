@@ -22,6 +22,7 @@ BEGIN {
 # Does everything load?
 use Test::More 'tests' => 6;
 use ThreatNet::Bot::AmmoBot;
+use POE;
 
 
 
@@ -46,3 +47,5 @@ is( scalar($bot->files), 0, '->files returns 0' );
 ok( $bot->add_file($0), 'Added file' );
 
 1;
+
+${$poe_kernel->[POE::Kernel::KR_RUN]} |= POE::Kernel::KR_RUN_CALLED;

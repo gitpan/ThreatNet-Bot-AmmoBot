@@ -16,7 +16,7 @@ requires       ( 'POE'                      => 0       );
 requires       ( 'POE::Wheel::FollowTail'   => 0       );
 requires       ( 'POE::Component::IRC'      => 0       );
 requires       ( 'ThreatNet::Message::IPv4' => '0.01'  );
-requires       ( 'ThreatNet::Filter'        => '0.02'  );
+requires       ( 'ThreatNet::Filter'        => '0.03'  );
 build_requires ( 'Test::More'               => '0.47'  );
 build_requires ( 'File::Spec'               => '0.82'  );
 install_script ( 'bin/ammobot'                         );

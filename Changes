@@ -1,5 +1,8 @@
 Revision history for Perl extension ThreatNet::Bot::AmmoBot
 
+0.06 Wed Jun 15 2005
+	- Speaks some stats now, I hope
+
 0.05 Fri Jun 10 2005
 	- Added some additional tests to make sure ammobot compiles
 
