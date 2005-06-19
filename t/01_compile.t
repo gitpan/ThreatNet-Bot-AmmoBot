@@ -28,12 +28,12 @@ sub compile_ok {
 	SKIP: {
 		skip( "Can't find ammobot to compile test it", 2 ) unless -f $path;
 		ok( -r $path, "Have read permissions for $script" );
-		my $include = '';
-		unless ( $ENV{HARNESS_ACTIVE} ) {
-			$include = '-I' . catdir( updir(), updir(), 'modules');
-		}
-		my $cmd = "perl $include -c $path 1>/dev/null 2>/dev/null";
+		my $include = join ' ', map { "-I$_" } @INC;
+		my $cmd = "$^X $include -c $path 1>/dev/null 2>/dev/null";
 		my $rv = system( $cmd );
+		if ( $rv == -1 ) {
+			diag("Failed to execute: $!");
+		}
 		is( $rv, 0, "Script $script compiles cleanly" );
 	}
 }

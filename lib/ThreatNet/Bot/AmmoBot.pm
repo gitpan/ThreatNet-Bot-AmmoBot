@@ -44,7 +44,7 @@ use ThreatNet::Filter::ThreatCache ();
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '0.06';
+	$VERSION = '0.07';
 }
 
 
@@ -378,7 +378,7 @@ sub _irc_public {
 
 	# Generate stats
 	my $stats = $_[HEAP]->{ThreatCache}->stats;
-	my $message = "Online $stats->{time_running} seconds. $stats->{seen} events at $stats->{rate_seen}/s with $stats->{kept} kept. $stats->{percent_discard} sync with channel";
+	my $message = "Online $stats->{time_running} seconds. $stats->{seen} events at $stats->{rate_seen}/s with $stats->{kept} kept and $stats->{size} currently in the ThreatCache. $stats->{percent_discard} synced with the channel";
 	$_[HEAP]->{IRC}->yield( privmsg => $_[HEAP]->{Channel}, $message );
 }
 
@@ -399,6 +399,12 @@ sub _threat_send {
 
 	# Pass it through the filter
 	$_[HEAP]->{Filter}->keep($Message) or return;
+
+	# Occasionally the IRC object is missing.
+	# I'm not entirely sure why this is the case, but it
+	# isn't very expensive to just check, and drop any
+	# messages if it's not there.
+	return unless $_[HEAP]->{IRC};
 
 	# Send the message immediately
 	$_[HEAP]->{IRC}->yield( privmsg => $_[HEAP]->{Channel}, $Message->message );

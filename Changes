@@ -1,5 +1,12 @@
 Revision history for Perl extension ThreatNet::Bot::AmmoBot
 
+0.07 Sun Jun 19 2005
+	- Added more docs on cron-friendlyness
+	- Added a check for when we have a threat, but not
+	  a working IRC object.
+	- Added support for pipes as input
+	- Add the current cache size to the stats
+
 0.06 Wed Jun 15 2005
 	- Speaks some stats now, I hope
 

@@ -11,7 +11,7 @@ ammobot - Tail threat messages to ThreatNet from log files
   > ammobot path/to/ammobot.conf
   
   # In your ammobot.conf
-  Version=0.04
+  Version=0.07
   Nick=ammobot
   Server=irc.freenode.org
   Channel=#threatnet
@@ -91,6 +91,21 @@ It lives at MyMailFilter.pm, in the same directory as my C<ammobot.conf> file.
   
   1;
 
+=head2 Configuring With Cron
+
+IRC is a somewhat unstable medium, and sometimes the bots fall off for
+various reasons.
+
+To get past this, C<ammobot> is designed to be extremely cron-friendly.
+
+It has an internal check for duplicates that is completely safe and will
+never leave stale locks around.
+
+It is recommended that you simple add something like the following to cron.
+
+  # Taken from Adam K's crontab
+  0,10,20,30,40,50 * * * *  cd /home/adam/ammobot; nohup /usr/local/bin/ammobot /home/adam/ammobot/bot.conf &
+
 =cut
 
 use strict;
@@ -105,7 +120,7 @@ use Params::Util '_INSTANCE',
 
 use vars qw{$VERSION $RUNONCE};
 BEGIN {
-	$VERSION = '0.05';
+	$VERSION = '0.07';
 
 	# Only one copy can run per system (for now)
 	$RUNONCE = Fcntl::LOCK_EX() | Fcntl::LOCK_NB();
@@ -179,7 +194,7 @@ foreach my $file ( sort keys %$Config ) {
 	# Check the file
 	$file =~ s/^\s+//;
 	$file =~ s/\s+$//;
-	unless ( -f $file and -r $file ) {
+	unless ( -e $file and ( -f $file or -p $file ) and -r $file ) {
 		error( "File '$file' does not exist" );
 	}
 
