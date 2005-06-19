@@ -11,7 +11,7 @@ ammobot - Tail threat messages to ThreatNet from log files
   > ammobot path/to/ammobot.conf
   
   # In your ammobot.conf
-  Version=0.07
+  Version=0.08
   Nick=ammobot
   Server=irc.freenode.org
   Channel=#threatnet
@@ -120,7 +120,7 @@ use Params::Util '_INSTANCE',
 
 use vars qw{$VERSION $RUNONCE};
 BEGIN {
-	$VERSION = '0.07';
+	$VERSION = '0.08';
 
 	# Only one copy can run per system (for now)
 	$RUNONCE = Fcntl::LOCK_EX() | Fcntl::LOCK_NB();
@@ -194,7 +194,7 @@ foreach my $file ( sort keys %$Config ) {
 	# Check the file
 	$file =~ s/^\s+//;
 	$file =~ s/\s+$//;
-	unless ( -e $file and ( -f $file or -p $file ) and -r $file ) {
+	unless ( $file and ( -p $file or -f $file ) and -r $file ) {
 		error( "File '$file' does not exist" );
 	}
 

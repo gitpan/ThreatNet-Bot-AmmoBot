@@ -44,7 +44,7 @@ use ThreatNet::Filter::ThreatCache ();
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '0.07';
+	$VERSION = '0.08';
 }
 
 
@@ -179,7 +179,7 @@ L<POE::Filter> for the file.
 sub add_file {
 	my $self = shift;
 	$self->running and die "Cannot add files once the bot is running";
-	my $file = ($_[0] and -f $_[0] and -r $_[0]) ? shift
+	my $file = ($_[0] and ( -p $_[0] or -f $_[0] ) and -r $_[0]) ? shift
 		: die "Invalid file '$_[0]'";
 	if ( $self->tails->{$file} ) {
 		die "File '$file' already attached to bot";
