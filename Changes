@@ -1,5 +1,8 @@
 Revision history for Perl extension ThreatNet::Bot::AmmoBot
 
+0.09 Tue Jun 21 2005
+	- Added support for a server password
+
 0.08 Mon Jun 20 2005
 	- Added a proper fix for pipes
 

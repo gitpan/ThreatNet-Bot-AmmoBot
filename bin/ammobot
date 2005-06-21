@@ -14,6 +14,7 @@ ammobot - Tail threat messages to ThreatNet from log files
   Version=0.08
   Nick=ammobot
   Server=irc.freenode.org
+  # ServerPassword=optional
   Channel=#threatnet
   
   [ /full/path/to/file/to/tail.log ]
@@ -120,7 +121,7 @@ use Params::Util '_INSTANCE',
 
 use vars qw{$VERSION $RUNONCE};
 BEGIN {
-	$VERSION = '0.08';
+	$VERSION = '0.09';
 
 	# Only one copy can run per system (for now)
 	$RUNONCE = Fcntl::LOCK_EX() | Fcntl::LOCK_NB();
@@ -174,6 +175,9 @@ my $AmmoBot = ThreatNet::Bot::AmmoBot->new(
 	Nick    => $main->{Nick},
 	Channel => $main->{Channel},
 	Server  => $main->{Server},
+	$main->{ServerPassword}
+		? (ServerPassword => $main->{ServerPassword})
+		: (),
 	$main->{Port}
 		? (Port => $main->{Port})
 		: (),

@@ -44,7 +44,7 @@ use ThreatNet::Filter::ThreatCache ();
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '0.08';
+	$VERSION = '0.09';
 }
 
 
@@ -282,6 +282,9 @@ sub _start {
 		Port     => $_[HEAP]->{Port},
 		Username => $_[HEAP]->{Username},
 		Ircname  => $_[HEAP]->{Ircname},
+		$_[HEAP]->{ServerPassword}
+			? (Password => $_[HEAP]->{ServerPassword})
+			: (),
 		} );
 
 	# Initialize the tails
