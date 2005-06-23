@@ -36,7 +36,8 @@ as a customer L<POE::Filter> for the event stream.
 use strict;
 use Params::Util '_INSTANCE';
 use POE 'Wheel::FollowTail',
-        'Component::IRC';
+        'Component::IRC',
+        'Component::IRC::Plugin::Connector';
 use ThreatNet::Message::IPv4       ();
 use ThreatNet::Filter::Chain       ();
 use ThreatNet::Filter::Network     ();
@@ -44,7 +45,7 @@ use ThreatNet::Filter::ThreatCache ();
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '0.09';
+	$VERSION = '0.10';
 }
 
 
@@ -276,15 +277,21 @@ sub _start {
 
 	# Register for events and connect to the server
 	$_[HEAP]->{IRC}->yield( register => 'all' );
+	$_[HEAP]->{IRC}->plugin_add(
+		'Connector' => POE::Component::IRC::Plugin::Connector->new( delay => 60 )
+		);
 	$_[HEAP]->{IRC}->yield( connect  => {
 		Nick     => $_[HEAP]->{Nick},
 		Server   => $_[HEAP]->{Server},
 		Port     => $_[HEAP]->{Port},
-		Username => $_[HEAP]->{Username},
-		Ircname  => $_[HEAP]->{Ircname},
+		$_[HEAP]->{Flood}
+			? (Flood => 1)
+			: (),
 		$_[HEAP]->{ServerPassword}
 			? (Password => $_[HEAP]->{ServerPassword})
 			: (),
+		Username => $_[HEAP]->{Username},
+		Ircname  => $_[HEAP]->{Ircname},
 		} );
 
 	# Initialize the tails

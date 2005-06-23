@@ -1,5 +1,9 @@
 Revision history for Perl extension ThreatNet::Bot::AmmoBot
 
+0.10 Thu Jun 23 2005
+	- Adding support for turningoff flood protection
+	- Use ::Plugin::Connector to maintain the connection
+
 0.09 Tue Jun 21 2005
 	- Added support for a server password
 

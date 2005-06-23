@@ -11,11 +11,14 @@ ammobot - Tail threat messages to ThreatNet from log files
   > ammobot path/to/ammobot.conf
   
   # In your ammobot.conf
-  Version=0.08
+  Version=0.09
   Nick=ammobot
   Server=irc.freenode.org
   # ServerPassword=optional
   Channel=#threatnet
+  # Uncomment the following to allow flooding.
+  # (Needed for bots that burst over 1/second to prevent state-damaging queues)
+  # Flood=1
   
   [ /full/path/to/file/to/tail.log ]
   # If no options, just looks for valid threat messages
@@ -121,7 +124,7 @@ use Params::Util '_INSTANCE',
 
 use vars qw{$VERSION $RUNONCE};
 BEGIN {
-	$VERSION = '0.09';
+	$VERSION = '0.10';
 
 	# Only one copy can run per system (for now)
 	$RUNONCE = Fcntl::LOCK_EX() | Fcntl::LOCK_NB();
